@@ -7,7 +7,7 @@
 #define TRAIN_TIMES 6 // assumption is that you have a 2 bit counter in the predictor
 #define ROUNDS 1 // run the train + attack sequence X amount of times (for redundancy)
 #define ATTACK_SAME_ROUNDS 5 // amount of times to attack the same index
-#define SECRET_SZ 26
+#define SECRET_SZ 4
 #define CACHE_HIT_THRESHOLD 50
 
 
@@ -16,7 +16,7 @@ uint8_t unused1[64];
 uint8_t array1[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
 uint8_t unused2[64];
 uint8_t array2[256 * L1_BLOCK_SZ_BYTES];
-char* secretString = "!\"#LoadSliceCoreIsBreached";
+char* secretString = "!\"LC";
 
 /**
  * reads in inArray array (and corresponding size) and outIdxArrays top two idx's (and their
@@ -130,6 +130,10 @@ int main(void){
 
         printf("m[%p] = want(%c) =?= guess(hits,dec,char,ascii) 1.(%lu, %d, %c) 2.(%lu, %d, %c)\n", (uint8_t*)(array1 + attackIdx), secretString[len], hitArray[0], output[0], output[0], hitArray[1], output[1], output[1]); 
 
+        if (secretString[len] != (char) output[0]) {
+            // fail
+            return 1;
+        }
         // read in the next secret 
         ++attackIdx;
     }
